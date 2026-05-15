@@ -1,0 +1,225 @@
+.tlm-root {
+	padding: var(--size-4-2);
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-6);
+}
+
+.tlm-empty {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+}
+
+.tlm-file-section {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+	overflow: hidden;
+}
+
+.tlm-file-head {
+	padding: var(--size-4-2) var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.tlm-file-title {
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	cursor: var(--cursor-link);
+	word-break: break-all;
+}
+
+.tlm-file-title.tlm-missing {
+	color: var(--text-error);
+	text-decoration: line-through;
+}
+
+.tlm-file-missing-msg {
+	padding: var(--size-4-2) var(--size-4-3);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.tlm-task-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.tlm-empty-list-drop {
+	padding: var(--size-4-3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	margin: var(--size-4-2);
+}
+
+.tlm-empty-list-drop-label {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	line-height: var(--line-height-tight);
+	pointer-events: none;
+  text-wrap: balance;
+}
+
+.tlm-empty-list-drop-active {
+	border-color: var(--interactive-accent);
+}
+
+.tlm-task-row {
+	border-bottom: 1px solid var(--background-modifier-border);
+	position: relative;
+}
+
+.tlm-task-row:last-child {
+	border-bottom: none;
+}
+
+.tlm-task-row-main {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+}
+
+.tlm-task-prefix {
+	display: flex;
+	flex-shrink: 0;
+	align-self: stretch;
+}
+
+.tlm-depth-cell {
+  width: 1rem;
+	flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: var(--size-4-3);
+}
+
+.tlm-depth-arrow {
+	color: var(--text-muted);
+  transform: translate(30%, -5%);
+}
+
+.tlm-depth-arrow svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+
+.tlm-task-row-main.tlm-dragging {
+	opacity: 0.55;
+}
+
+.tlm-task-hit {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: var(--size-4-3);
+	align-self: center;
+}
+
+.tlm-checkbox {
+	display: inline-block;
+	flex: 0 0 auto;
+}
+
+.tlm-task-body {
+	flex: 1 1 auto;
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	word-break: break-word;
+}
+
+.tlm-task-body-done {
+	text-decoration: line-through;
+	color: var(--text-muted);
+}
+
+.tlm-task-hit:hover .tlm-task-body-done {
+	color: var(--text-normal);
+}
+
+.tlm-task-hit:hover .tlm-task-body {
+	color: var(--text-normal);
+}
+
+.tlm-icon-btn {
+  height: auto;
+	flex: 0 0 auto;
+	padding: 4px;
+  margin-right: var(--size-4-1);
+	align-self: center;
+	box-shadow: none !important;
+	background-color: transparent !important;
+	color: var(--text-muted) !important;
+}
+
+.tlm-icon-btn:hover {
+	color: var(--text-error) !important;
+	background-color: var(--background-modifier-hover);
+}
+
+.tlm-drop-before {
+	box-shadow: inset 0 2px 0 0 var(--interactive-accent);
+}
+
+.tlm-drop-after {
+	box-shadow: inset 0 -2px 0 0 var(--interactive-accent);
+}
+
+.tlm-delete-preview {
+	margin: var(--size-4-3) 0;
+	padding: var(--size-4-2);
+	background: var(--background-secondary);
+	border-radius: var(--radius-s);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	word-break: break-word;
+}
+
+/* Bottom-sheet presentation on mobile for the delete confirmation modal */
+.is-mobile .tlm-confirm-delete-modal {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: auto;
+	max-width: 100%;
+}
+
+.is-mobile .tlm-confirm-delete-modal .modal-button-container {
+  padding: 0;
+}
+
+.tlm-add-row {
+	display: flex;
+	gap: var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-2);
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.tlm-add-input {
+	flex: 1 1 auto;
+}
+
+.tlm-add-btn {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--input-height);
+	padding: 0 var(--size-4-2);
+}
+
+textarea.tlm-todo-files-textarea {
+	resize: vertical;
+	max-width: 100%;
+	box-sizing: border-box;
+	min-height: 5em;
+}
