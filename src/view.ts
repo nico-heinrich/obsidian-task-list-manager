@@ -226,10 +226,11 @@ export class TaskListView extends ItemView {
 
 	async render(): Promise<void> {
 		const scrollTop = this.contentEl.scrollTop;
-		this.rootEl.empty();
 		const allFiles = this.plugin.settings.listFiles;
 		const paths = getVisibleListPaths(this.plugin.settings);
+
 		if (paths.length === 0) {
+			this.rootEl.empty();
 			const text =
 				allFiles.length === 0
 					? "No lists configured. Add files in plugin settings."
@@ -239,8 +240,25 @@ export class TaskListView extends ItemView {
 			return;
 		}
 
-		for (const path of paths) {
-			const file = this.app.vault.getAbstractFileByPath(path);
+		const showLoading = this.rootEl.childElementCount === 0;
+		if (showLoading) {
+			this.rootEl.empty();
+			this.rootEl.createDiv({ cls: "tlm-loading" });
+		}
+
+		const sections = await Promise.all(
+			paths.map(async (path) => {
+				const file = this.app.vault.getAbstractFileByPath(path);
+				if (!(file instanceof TFile)) {
+					return { path, file: null as const, tasks: [] as ParsedTask[] };
+				}
+				const content = await this.app.vault.read(file);
+				return { path, file, tasks: parseTasksFromContent(path, content) };
+			}),
+		);
+
+		this.rootEl.empty();
+		for (const { path, file, tasks } of sections) {
 			const section = this.rootEl.createDiv({ cls: "tlm-file-section" });
 
 			const head = section.createDiv({ cls: "tlm-file-head" });
@@ -250,7 +268,7 @@ export class TaskListView extends ItemView {
 				attr: { "data-tlm-open": path },
 				text: displayName,
 			});
-			if (!(file instanceof TFile)) {
+			if (!file) {
 				title.addClass("tlm-missing");
 				section.createDiv({
 					cls: "tlm-file-missing-msg",
@@ -258,9 +276,6 @@ export class TaskListView extends ItemView {
 				});
 				continue;
 			}
-
-			const content = await this.app.vault.read(file);
-			const tasks = parseTasksFromContent(path, content);
 
 			this.renderFileHeadMenu(head, path, displayName, tasks);
 
