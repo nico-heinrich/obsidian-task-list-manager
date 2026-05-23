@@ -1,4 +1,5 @@
 import type { App, TFile } from "obsidian";
+import { formatTaskLine, resolveIndentForEdit, TASK_LINE_RE } from "./task-parser";
 
 function splitLines(content: string): string[] {
 	return content.split(/\r?\n/);
@@ -41,6 +42,30 @@ export class TaskManager {
 			const idx = line - 1;
 			if (idx < 0 || idx >= lines.length) return data;
 			lines.splice(idx, 1);
+			return joinLines(lines);
+		});
+	}
+
+	async updateTask(path: string, line: number, body: string, wantsSubtask: boolean): Promise<void> {
+		const file = this.getFile(path);
+		if (!file) return;
+		const trimmed = body.trim();
+		if (!trimmed) return;
+		await this.app.vault.process(file, (data) => {
+			const lines = splitLines(data);
+			const idx = line - 1;
+			if (idx < 0 || idx >= lines.length) return data;
+			const raw = lines[idx];
+			const m = raw.match(TASK_LINE_RE);
+			if (!m) return data;
+			const indent = m[1] ?? "";
+			const mark = (m[2] ?? " ").toLowerCase();
+			const completed = mark === "x";
+			if (completed) return data;
+			const newIndent = resolveIndentForEdit(indent, wantsSubtask);
+			const newLine = formatTaskLine(newIndent, completed, trimmed);
+			if (newLine === raw) return data;
+			lines[idx] = newLine;
 			return joinLines(lines);
 		});
 	}

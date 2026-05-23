@@ -19,13 +19,14 @@
 }
 
 .tlm-file-head {
-	padding: var(--size-4-2) var(--size-4-3);
+	padding: var(--size-4-3) var(--size-4-3);
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .tlm-file-title {
 	font-weight: var(--font-semibold);
-	font-size: var(--font-ui-small);
+	font-size: var(--font-ui-large);
+	line-height: var(--line-height-tight);
 	cursor: var(--cursor-link);
 	word-break: break-all;
 }
@@ -165,6 +166,10 @@
 	background-color: var(--background-modifier-hover);
 }
 
+.tlm-icon-btn-edit:hover {
+	color: var(--text-normal) !important;
+}
+
 .tlm-drop-before {
 	box-shadow: inset 0 2px 0 0 var(--interactive-accent);
 }
@@ -197,6 +202,40 @@
   padding: 0;
 }
 
+.tlm-edit-input {
+	display: block;
+	width: 100%;
+	margin: var(--size-4-3) 0;
+	box-sizing: border-box;
+}
+
+.tlm-edit-task-modal .setting-item {
+	border-top: none;
+	padding: var(--size-4-2) 0;
+}
+
+.tlm-edit-task-modal .tlm-edit-subtask-setting label.setting-item-info {
+	flex: 1 1 auto;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	min-height: var(--input-height);
+}
+
+/* Bottom-sheet presentation on mobile for the edit task modal */
+.is-mobile .tlm-edit-task-modal {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: auto;
+	max-width: 100%;
+}
+
+.is-mobile .tlm-edit-task-modal .modal-button-container {
+	padding: 0;
+}
+
 .tlm-add-row {
 	display: flex;
 	gap: var(--size-4-2);
@@ -215,6 +254,11 @@
 	justify-content: center;
 	min-width: var(--input-height);
 	padding: 0 var(--size-4-2);
+}
+
+.tlm-add-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
 }
 
 textarea.tlm-todo-files-textarea {

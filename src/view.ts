@@ -5,6 +5,7 @@ import {
 	Modal,
 	Platform,
 	TFile,
+	ToggleComponent,
 	WorkspaceLeaf,
 	setIcon,
 } from "obsidian";
@@ -17,6 +18,7 @@ import type { DropRelation } from "./task-manager";
 export const TODO_VIEW_TYPE = "todo-list-manager-view";
 
 const MIME = "application/x-obsidian-todo-task";
+const EDIT_SUBTASK_TOGGLE_ID = "tlm-edit-subtask-toggle";
 
 /** Mobile modal close animation is ~200–300ms; vault + full render during that window causes jank. */
 const MOBILE_MODAL_CLOSE_MS = 300;
@@ -74,6 +76,100 @@ class ConfirmDeleteModal extends Modal {
 
 	onClose(): void {
 		this.settle(false);
+		const { contentEl } = this;
+		const empty = (): void => {
+			contentEl.empty();
+		};
+		if (Platform.isMobile) {
+			afterModalCloseMobile(empty);
+		} else {
+			empty();
+		}
+	}
+}
+
+export interface EditTaskResult {
+	body: string;
+	wantsSubtask: boolean;
+}
+
+class EditTaskModal extends Modal {
+	private readonly initialBody: string;
+	private readonly initialSubtask: boolean;
+	private readonly resolvePromise: (result: EditTaskResult | null) => void;
+	private settled = false;
+	private wantsSubtask: boolean;
+
+	constructor(
+		app: App,
+		initialBody: string,
+		initialSubtask: boolean,
+		resolvePromise: (result: EditTaskResult | null) => void,
+	) {
+		super(app);
+		this.initialBody = initialBody;
+		this.initialSubtask = initialSubtask;
+		this.wantsSubtask = initialSubtask;
+		this.resolvePromise = resolvePromise;
+	}
+
+	private settle(result: EditTaskResult | null): void {
+		if (this.settled) return;
+		this.settled = true;
+		this.resolvePromise(result);
+	}
+
+	onOpen(): void {
+		this.modalEl.addClass("tlm-edit-task-modal");
+		this.setTitle("Edit task");
+		const { contentEl } = this;
+
+		const input = contentEl.createEl("input", {
+			type: "text",
+			cls: "tlm-edit-input",
+		});
+		input.value = this.initialBody;
+
+		const subtaskRow = contentEl.createDiv({
+			cls: "setting-item mod-toggle-setting tlm-edit-subtask-setting",
+		});
+		const subtaskLabel = subtaskRow.createEl("label", {
+			cls: "setting-item-info",
+			attr: { for: EDIT_SUBTASK_TOGGLE_ID },
+		});
+		subtaskLabel.createDiv({ cls: "setting-item-name", text: "Sub task" });
+		const subtaskControl = subtaskRow.createDiv({ cls: "setting-item-control" });
+		new ToggleComponent(subtaskControl)
+			.setValue(this.initialSubtask)
+			.onChange((v) => {
+				this.wantsSubtask = v;
+			});
+		const toggleInput = subtaskControl.querySelector<HTMLInputElement>("input[type='checkbox']");
+		if (toggleInput) {
+			toggleInput.id = EDIT_SUBTASK_TOGGLE_ID;
+		}
+
+		const btnRow = contentEl.createDiv({ cls: "modal-button-container" });
+		const updateBtn = new ButtonComponent(btnRow).setButtonText("Update").setCta();
+		updateBtn.onClick(() => {
+			const trimmed = input.value.trim();
+			if (!trimmed) return;
+			this.settle({ body: trimmed, wantsSubtask: this.wantsSubtask });
+			this.close();
+		});
+		new ButtonComponent(btnRow).setButtonText("Cancel").onClick(() => {
+			this.settle(null);
+			this.close();
+		});
+
+		window.setTimeout(() => {
+			input.focus();
+			input.select();
+		}, 0);
+	}
+
+	onClose(): void {
+		this.settle(null);
 		const { contentEl } = this;
 		const empty = (): void => {
 			contentEl.empty();
@@ -230,23 +326,45 @@ export class TodoListView extends ItemView {
 		const bodyCls = task.completed ? "tlm-task-body tlm-task-body-done" : "tlm-task-body";
 		hit.createSpan({ cls: bodyCls, text: task.body || " " });
 
-		const del = main.createEl("button", { cls: "tlm-icon-btn" });
-		setIcon(del, "trash");
-		del.setAttr("aria-label", "Delete task");
-		this.registerDomEvent(del, "click", async (ev) => {
-			ev.stopPropagation();
-			const confirmed = await this.confirmDelete(task.body);
-			if (!confirmed) return;
-			const { path, line } = task;
-			const runDelete = (): void => {
-				void this.plugin.taskManager.deleteTask(path, line).then(() => this.plugin.scheduleRefresh());
-			};
-			if (Platform.isMobile) {
-				afterModalCloseMobileDelete(runDelete);
-			} else {
-				afterModalCloseDesktop(runDelete);
-			}
-		});
+		if (task.completed) {
+			const del = main.createEl("button", { cls: "tlm-icon-btn" });
+			setIcon(del, "trash");
+			del.setAttr("aria-label", "Delete task");
+			this.registerDomEvent(del, "click", async (ev) => {
+				ev.stopPropagation();
+				const confirmed = await this.confirmDelete(task.body);
+				if (!confirmed) return;
+				const { path, line } = task;
+				const runDelete = (): void => {
+					void this.plugin.taskManager.deleteTask(path, line).then(() => this.plugin.scheduleRefresh());
+				};
+				if (Platform.isMobile) {
+					afterModalCloseMobileDelete(runDelete);
+				} else {
+					afterModalCloseDesktop(runDelete);
+				}
+			});
+		} else {
+			const editBtn = main.createEl("button", { cls: "tlm-icon-btn tlm-icon-btn-edit" });
+			setIcon(editBtn, "pencil");
+			editBtn.setAttr("aria-label", "Edit task");
+			this.registerDomEvent(editBtn, "click", async (ev) => {
+				ev.stopPropagation();
+				const result = await this.openEditTask(task);
+				if (!result) return;
+				const { path, line } = task;
+				const runUpdate = (): void => {
+					void this.plugin.taskManager
+						.updateTask(path, line, result.body, result.wantsSubtask)
+						.then(() => this.plugin.scheduleRefresh());
+				};
+				if (Platform.isMobile) {
+					afterModalCloseMobile(runUpdate);
+				} else {
+					afterModalCloseDesktop(runUpdate);
+				}
+			});
+		}
 
 		this.registerDomEvent(main, "dragstart", (e) => {
 			this.dragPayload = { path: task.path, line: task.line };
@@ -294,6 +412,14 @@ export class TodoListView extends ItemView {
 		});
 	}
 
+	private async openEditTask(task: ParsedTask): Promise<EditTaskResult | null> {
+		const initialSubtask = indentDepthFromLeadingWhitespace(task.indent) >= 1;
+		return new Promise((resolve) => {
+			const modal = new EditTaskModal(this.app, task.body, initialSubtask, resolve);
+			modal.open();
+		});
+	}
+
 	private renderAddRow(section: HTMLDivElement, path: string): void {
 		const wrap = section.createDiv({ cls: "tlm-add-row" });
 		const input = wrap.createEl("input", {
@@ -304,14 +430,20 @@ export class TodoListView extends ItemView {
 		const btn = wrap.createEl("button", { cls: "tlm-add-btn" });
 		setIcon(btn, "plus");
 		btn.setAttribute("aria-label", "Add task");
+		const syncAddEnabled = () => {
+			btn.disabled = !input.value.trim();
+		};
+		syncAddEnabled();
 		const submit = async () => {
 			const v = input.value;
 			if (!v.trim()) return;
 			input.value = "";
+			syncAddEnabled();
 			await this.plugin.taskManager.addTask(path, v);
 			this.plugin.scheduleRefresh();
 		};
 		this.registerDomEvent(btn, "click", () => void submit());
+		this.registerDomEvent(input, "input", syncAddEnabled);
 		this.registerDomEvent(input, "keydown", (ev) => {
 			if (ev.key === "Enter") void submit();
 		});
