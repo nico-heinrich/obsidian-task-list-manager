@@ -287,9 +287,135 @@
 	cursor: not-allowed;
 }
 
-textarea.tlm-todo-files-textarea {
-	resize: vertical;
-	max-width: 100%;
-	box-sizing: border-box;
-	min-height: 5em;
+.tlm-settings-desc {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	margin-bottom: var(--size-4-3);
+}
+
+.tlm-settings-file-list {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	margin-bottom: var(--size-4-2);
+}
+
+.tlm-settings-drop-indicator {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--interactive-accent);
+	border-radius: 1px;
+	pointer-events: none;
+	opacity: 0;
+	z-index: 2;
+}
+
+.tlm-settings-drop-indicator.is-active {
+	opacity: 1;
+}
+
+.tlm-settings-add-btn {
+	margin-top: var(--size-4-1);
+}
+
+.tlm-settings-file-empty {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	padding: var(--size-4-2) 0;
+}
+
+.tlm-settings-file-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding-right: var(--size-4-2);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.tlm-settings-file-row.tlm-settings-file-row-hidden {
+	opacity: 0.55;
+}
+
+.tlm-settings-file-row.tlm-dragging {
+	opacity: 0.55;
+}
+
+.tlm-settings-file-row-main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlm-settings-file-hit {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: var(--size-4-2);
+	cursor: grab;
+}
+
+.tlm-settings-file-hit:active {
+	cursor: grabbing;
+}
+
+.tlm-settings-file-grip {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.tlm-settings-file-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.tlm-settings-file-title {
+	font-weight: var(--font-medium);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	word-break: break-word;
+}
+
+.tlm-settings-file-title .tlm-missing {
+	color: var(--text-error);
+	text-decoration: line-through;
+}
+
+.tlm-settings-file-not-found {
+	color: var(--text-error);
+	font-weight: var(--font-normal);
+	text-decoration: none;
+}
+
+.tlm-settings-file-path {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	line-height: var(--line-height-tight);
+	word-break: break-all;
+}
+
+.tlm-settings-file-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex-shrink: 0;
+}
+
+.tlm-settings-file-action {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

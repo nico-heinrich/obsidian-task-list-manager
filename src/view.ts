@@ -10,15 +10,16 @@ import {
 	WorkspaceLeaf,
 	setIcon,
 } from "obsidian";
-import type TodoListManagerPlugin from "./main";
-import { resolveTodoFilePaths } from "./settings";
+import { confirmDelete } from "./confirm-delete-modal";
+import type TaskListManagerPlugin from "./main";
+import { getVisibleListPaths } from "./settings";
 import type { ParsedTask } from "./task-parser";
 import { indentDepthFromLeadingWhitespace, parseTasksFromContent } from "./task-parser";
 import type { DropRelation } from "./task-manager";
 
-export const TODO_VIEW_TYPE = "todo-list-manager-view";
+export const TASK_LIST_VIEW_TYPE = "task-list-manager-view";
 
-const MIME = "application/x-obsidian-todo-task";
+const TASK_DRAG_MIME = "application/x-obsidian-task-list-item";
 const EDIT_SUBTASK_TOGGLE_ID = "tlm-edit-subtask-toggle";
 
 /** Mobile modal close animation is ~200–300ms; vault + full render during that window causes jank. */
@@ -37,56 +38,6 @@ function afterModalCloseDesktop(work: () => void): void {
 	window.requestAnimationFrame(() => {
 		window.requestAnimationFrame(work);
 	});
-}
-
-class ConfirmDeleteModal extends Modal {
-	private taskPreview: string;
-	private readonly resolvePromise: (confirmed: boolean) => void;
-	private settled = false;
-
-	constructor(app: App, taskPreview: string, resolvePromise: (confirmed: boolean) => void) {
-		super(app);
-		this.taskPreview = taskPreview;
-		this.resolvePromise = resolvePromise;
-	}
-
-	private settle(confirmed: boolean): void {
-		if (this.settled) return;
-		this.settled = true;
-		this.resolvePromise(confirmed);
-	}
-
-	onOpen(): void {
-		this.modalEl.addClass("tlm-confirm-delete-modal");
-		this.setTitle("Delete task?");
-		const { contentEl } = this;
-		contentEl.createEl("p", { text: this.taskPreview, cls: "tlm-delete-preview" });
-
-		const btnRow = contentEl.createDiv({ cls: "modal-button-container" });
-		new ButtonComponent(btnRow).setButtonText("Delete").setWarning().onClick(() => {
-			this.settle(true);
-			this.close();
-		});
-		new ButtonComponent(btnRow)
-			.setButtonText("Cancel")
-			.onClick(() => {
-				this.settle(false);
-				this.close();
-			});
-	}
-
-	onClose(): void {
-		this.settle(false);
-		const { contentEl } = this;
-		const empty = (): void => {
-			contentEl.empty();
-		};
-		if (Platform.isMobile) {
-			afterModalCloseMobile(empty);
-		} else {
-			empty();
-		}
-	}
 }
 
 class ConfirmDeleteAllModal extends Modal {
@@ -188,7 +139,7 @@ class EditTaskModal extends Modal {
 			cls: "setting-item-info",
 			attr: { for: EDIT_SUBTASK_TOGGLE_ID },
 		});
-		subtaskLabel.createDiv({ cls: "setting-item-name", text: "Sub task" });
+		subtaskLabel.createDiv({ cls: "setting-item-name", text: "Subtask" });
 		const subtaskControl = subtaskRow.createDiv({ cls: "setting-item-control" });
 		new ToggleComponent(subtaskControl)
 			.setValue(this.initialSubtask)
@@ -233,22 +184,22 @@ class EditTaskModal extends Modal {
 	}
 }
 
-export class TodoListView extends ItemView {
-	plugin: TodoListManagerPlugin;
+export class TaskListView extends ItemView {
+	plugin: TaskListManagerPlugin;
 	private rootEl!: HTMLDivElement;
 	private dragPayload: { path: string; line: number } | null = null;
 
-	constructor(leaf: WorkspaceLeaf, plugin: TodoListManagerPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: TaskListManagerPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 	}
 
 	getViewType(): string {
-		return TODO_VIEW_TYPE;
+		return TASK_LIST_VIEW_TYPE;
 	}
 
 	getDisplayText(): string {
-		return "Todo lists";
+		return "Task lists";
 	}
 
 	getIcon(): string {
@@ -276,12 +227,14 @@ export class TodoListView extends ItemView {
 	async render(): Promise<void> {
 		const scrollTop = this.contentEl.scrollTop;
 		this.rootEl.empty();
-		const paths = resolveTodoFilePaths(this.app.vault, this.plugin.settings.todoFilePaths);
+		const allFiles = this.plugin.settings.listFiles;
+		const paths = getVisibleListPaths(this.plugin.settings);
 		if (paths.length === 0) {
-			this.rootEl.createDiv({
-				text: "No todo files configured. Add paths in plugin settings.",
-				cls: "tlm-empty",
-			});
+			const text =
+				allFiles.length === 0
+					? "No lists configured. Add files in plugin settings."
+					: "All lists are hidden. Show them in plugin settings.";
+			this.rootEl.createDiv({ text, cls: "tlm-empty" });
 			this.contentEl.scrollTop = scrollTop;
 			return;
 		}
@@ -498,7 +451,7 @@ export class TodoListView extends ItemView {
 
 		this.registerDomEvent(main, "dragstart", (e) => {
 			this.dragPayload = { path: task.path, line: task.line };
-			e.dataTransfer?.setData(MIME, JSON.stringify(this.dragPayload));
+			e.dataTransfer?.setData(TASK_DRAG_MIME, JSON.stringify(this.dragPayload));
 			e.dataTransfer?.setData("text/plain", task.rawLine);
 			if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
 			main.addClass("tlm-dragging");
@@ -536,10 +489,7 @@ export class TodoListView extends ItemView {
 
 	private async confirmDelete(taskBody: string): Promise<boolean> {
 		const preview = taskBody.length > 50 ? taskBody.substring(0, 50) + "..." : taskBody;
-		return new Promise((resolve) => {
-			const modal = new ConfirmDeleteModal(this.app, preview, resolve);
-			modal.open();
-		});
+		return confirmDelete(this.app, "Delete task?", preview);
 	}
 
 	private async openEditTask(task: ParsedTask): Promise<EditTaskResult | null> {
@@ -580,7 +530,7 @@ export class TodoListView extends ItemView {
 	}
 
 	private hasTaskDrag(e: DragEvent): boolean {
-		return Boolean(e.dataTransfer?.types.includes(MIME));
+		return Boolean(e.dataTransfer?.types.includes(TASK_DRAG_MIME));
 	}
 
 	private relationFromPointer(row: HTMLElement, e: DragEvent): "before" | "after" {
@@ -597,7 +547,7 @@ export class TodoListView extends ItemView {
 
 	private async handleDropOnEmptyList(e: DragEvent, dropPath: string): Promise<void> {
 		const raw =
-			e.dataTransfer?.getData(MIME) ||
+			e.dataTransfer?.getData(TASK_DRAG_MIME) ||
 			(this.dragPayload ? JSON.stringify(this.dragPayload) : "");
 		if (!raw) return;
 		let parsed: { path: string; line: number };
@@ -618,7 +568,7 @@ export class TodoListView extends ItemView {
 		edge: "before" | "after",
 	): Promise<void> {
 		const raw =
-			e.dataTransfer?.getData(MIME) ||
+			e.dataTransfer?.getData(TASK_DRAG_MIME) ||
 			(this.dragPayload ? JSON.stringify(this.dragPayload) : "");
 		if (!raw) return;
 		let parsed: { path: string; line: number };

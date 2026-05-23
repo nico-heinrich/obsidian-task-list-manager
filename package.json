@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-todo-list-manager",
+	"name": "obsidian-task-list-manager",
 	"version": "0.1.0",
-	"description": "Obsidian plugin: manage todo lists in the sidebar",
+	"description": "Obsidian plugin: manage task lists in the sidebar",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

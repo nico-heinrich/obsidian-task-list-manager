@@ -1,6 +1,6 @@
 {
-	"id": "todo-list-manager",
-	"name": "Todo List Manager",
+	"id": "task-list-manager",
+	"name": "Task List Manager",
 	"version": "0.1.0",
 	"minAppVersion": "1.5.0",
 	"description": "Manage markdown task lists across files from the right sidebar.",

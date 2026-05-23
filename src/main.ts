@@ -1,15 +1,16 @@
 import { Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
-	parseConfiguredPaths,
-	TodoListManagerSettingTab,
-	type TodoListManagerSettings,
+	getAllConfiguredPaths,
+	normalizeSettings,
+	TaskListManagerSettingTab,
+	type TaskListManagerSettings,
 } from "./settings";
 import { TaskManager } from "./task-manager";
-import { TODO_VIEW_TYPE, TodoListView } from "./view";
+import { TASK_LIST_VIEW_TYPE, TaskListView } from "./view";
 
-export default class TodoListManagerPlugin extends Plugin {
-	settings: TodoListManagerSettings = DEFAULT_SETTINGS;
+export default class TaskListManagerPlugin extends Plugin {
+	settings: TaskListManagerSettings = DEFAULT_SETTINGS;
 	taskManager!: TaskManager;
 	private refreshPending = false;
 
@@ -17,24 +18,23 @@ export default class TodoListManagerPlugin extends Plugin {
 		this.taskManager = new TaskManager(this.app);
 		await this.loadSettings();
 
-		this.registerView(TODO_VIEW_TYPE, (leaf) => new TodoListView(leaf, this));
+		this.registerView(TASK_LIST_VIEW_TYPE, (leaf) => new TaskListView(leaf, this));
 
-		this.addSettingTab(new TodoListManagerSettingTab(this.app, this));
+		this.addSettingTab(new TaskListManagerSettingTab(this.app, this));
 
-		this.addRibbonIcon("list-checks", "Open todo lists", () => {
+		this.addRibbonIcon("list-checks", "Open task lists", () => {
 			void this.activateView();
 		});
 
 		this.addCommand({
-			id: "open-todo-view",
-			name: "Open todo list manager",
+			id: "open-task-lists",
+			name: "Open task lists",
 			callback: () => {
 				void this.activateView();
 			},
 		});
 
-		const configuredPaths = (): Set<string> =>
-			new Set(parseConfiguredPaths(this.settings.todoFilePaths));
+		const configuredPaths = (): Set<string> => new Set(getAllConfiguredPaths(this.settings));
 
 		const refreshIfConfiguredMd = (file: unknown): void => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
@@ -48,14 +48,11 @@ export default class TodoListManagerPlugin extends Plugin {
 	}
 
 	onunload(): void {
-		void this.app.workspace.detachLeavesOfType(TODO_VIEW_TYPE);
+		void this.app.workspace.detachLeavesOfType(TASK_LIST_VIEW_TYPE);
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as TodoListManagerSettings;
-		if (!this.settings.todoFilePaths.trim()) {
-			this.settings.todoFilePaths = DEFAULT_SETTINGS.todoFilePaths;
-		}
+		this.settings = normalizeSettings(await this.loadData());
 	}
 
 	async saveSettings(): Promise<void> {
@@ -64,7 +61,7 @@ export default class TodoListManagerPlugin extends Plugin {
 
 	async activateView(): Promise<void> {
 		const { workspace } = this.app;
-		const existing = workspace.getLeavesOfType(TODO_VIEW_TYPE);
+		const existing = workspace.getLeavesOfType(TASK_LIST_VIEW_TYPE);
 		if (existing.length > 0) {
 			await workspace.revealLeaf(existing[0]);
 			return;
@@ -75,11 +72,11 @@ export default class TodoListManagerPlugin extends Plugin {
 		if (!leaf) {
 			leaf = workspace.getLeaf("tab");
 		}
-		await leaf.setViewState({ type: TODO_VIEW_TYPE, active: true });
+		await leaf.setViewState({ type: TASK_LIST_VIEW_TYPE, active: true });
 		await workspace.revealLeaf(leaf);
 	}
 
-	/** Debounced refresh of all todo manager views */
+	/** Debounced refresh of all task list views */
 	scheduleRefresh(): void {
 		if (this.refreshPending) return;
 		this.refreshPending = true;
@@ -90,14 +87,14 @@ export default class TodoListManagerPlugin extends Plugin {
 	}
 
 	/** Alias for settings tab */
-	refreshTodoView(): void {
+	refreshTaskListView(): void {
 		this.scheduleRefresh();
 	}
 
 	private async refreshAllViews(): Promise<void> {
-		for (const leaf of this.app.workspace.getLeavesOfType(TODO_VIEW_TYPE)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(TASK_LIST_VIEW_TYPE)) {
 			const v = leaf.view;
-			if (v instanceof TodoListView) await v.render();
+			if (v instanceof TaskListView) await v.render();
 		}
 	}
 }
