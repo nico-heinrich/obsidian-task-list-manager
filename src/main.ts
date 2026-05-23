@@ -48,7 +48,7 @@ export default class TaskListManagerPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on("layout-ready", () => {
-				void this.handleLayoutReady();
+				void this.ensureTaskListView();
 			}),
 		);
 	}
@@ -65,13 +65,7 @@ export default class TaskListManagerPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private handleLayoutReady(): void {
-		const mode = this.settings.openOnStartup;
-		if (mode === "never") return;
-		void this.ensureTaskListView(mode === "always");
-	}
-
-	/** Ensures the task list view exists in the workspace; optionally reveals the sidebar. */
+	/** Ensures the task list view is in the right sidebar; optionally reveals the panel. */
 	async ensureTaskListView(reveal = false): Promise<void> {
 		const { workspace } = this.app;
 		const existing = workspace.getLeavesOfType(TASK_LIST_VIEW_TYPE);

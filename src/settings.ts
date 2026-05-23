@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, TFile, setIcon } from "obsidian";
+import { App, PluginSettingTab, TFile, setIcon } from "obsidian";
 import { confirmDelete } from "./confirm-delete-modal";
 import type TaskListManagerPlugin from "./main";
 import { ListFileSuggestModal } from "./list-file-suggest-modal";
@@ -10,26 +10,13 @@ export interface ListFileEntry {
 	hidden?: boolean;
 }
 
-export type OpenOnStartup = "never" | "if-missing" | "always";
-
 export interface TaskListManagerSettings {
 	listFiles: ListFileEntry[];
-	openOnStartup: OpenOnStartup;
 }
 
 export const DEFAULT_SETTINGS: TaskListManagerSettings = {
 	listFiles: [{ path: "tasks.md" }],
-	openOnStartup: "if-missing",
 };
-
-const OPEN_ON_STARTUP_VALUES: OpenOnStartup[] = ["never", "if-missing", "always"];
-
-function normalizeOpenOnStartup(value: unknown): OpenOnStartup {
-	if (typeof value === "string" && OPEN_ON_STARTUP_VALUES.includes(value as OpenOnStartup)) {
-		return value as OpenOnStartup;
-	}
-	return DEFAULT_SETTINGS.openOnStartup;
-}
 
 export function normalizeSettings(raw: unknown): TaskListManagerSettings {
 	if (
@@ -38,11 +25,7 @@ export function normalizeSettings(raw: unknown): TaskListManagerSettings {
 		Array.isArray((raw as TaskListManagerSettings).listFiles) &&
 		(raw as TaskListManagerSettings).listFiles.length > 0
 	) {
-		const parsed = raw as TaskListManagerSettings;
-		return {
-			listFiles: parsed.listFiles,
-			openOnStartup: normalizeOpenOnStartup(parsed.openOnStartup),
-		};
+		return { listFiles: (raw as TaskListManagerSettings).listFiles };
 	}
 	return { ...DEFAULT_SETTINGS };
 }
@@ -79,23 +62,6 @@ export class TaskListManagerSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName("Open on startup")
-			.setDesc(
-				"When Obsidian loads, add the task list view to the right sidebar. “Reveal sidebar” also opens the right panel (including on mobile).",
-			)
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("never", "Never")
-					.addOption("if-missing", "Add if missing")
-					.addOption("always", "Add and reveal sidebar")
-					.setValue(this.plugin.settings.openOnStartup)
-					.onChange(async (value) => {
-						this.plugin.settings.openOnStartup = value as OpenOnStartup;
-						await this.plugin.saveSettings();
-					}),
-			);
 
 		containerEl.createDiv({
 			cls: "tlm-settings-desc",
