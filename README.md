@@ -50,7 +50,7 @@ Obsidian loads plugins from `.obsidian/plugins/<folder-name>/`. The folder name 
 
 ## Getting started
 
-1. Open the view with the **list-checks** ribbon icon or the command **Open task lists** (`Ctrl/Cmd+P` → “Open task lists”).
+1. When the plugin is enabled, the task list view is added to the right sidebar automatically. You can also open it with the **list-checks** ribbon icon or the command **Open task lists** (`Ctrl/Cmd+P` → “Open task lists”).
 2. Go to **Settings → Task List Manager**.
 3. By default, one list is configured: `tasks.md` at the vault root. Create that file (or change the path) and add tasks:
 
@@ -129,9 +129,22 @@ For local testing, symlink or copy the project into `.obsidian/plugins/task-list
 | `manifest.json` | Plugin metadata for Obsidian |
 | `styles.css` | Sidebar and settings styles |
 
+## Releasing (Community Plugins)
+
+To publish or update the plugin in Obsidian’s Community Plugins directory:
+
+1. Bump `version` in `manifest.json` (semver, e.g. `1.0.0`).
+2. Run `npm run build`.
+3. [Create a GitHub release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release) whose **tag** matches that version exactly.
+4. Attach these files to the release: `main.js`, `manifest.json`, `styles.css`.
+5. Commit the updated `manifest.json` on the default branch.
+6. Submit or update at [community.obsidian.md](https://community.obsidian.md) (**Plugins → New plugin**), linking your GitHub repo.
+
+Official guide: [Submit your plugin](https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin).
+
 ## License
 
-MIT — see [package.json](package.json).
+MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 

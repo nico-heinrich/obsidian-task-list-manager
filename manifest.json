@@ -4,6 +4,7 @@
 	"version": "0.1.0",
 	"minAppVersion": "1.5.0",
 	"description": "Manage markdown task lists across files from the right sidebar.",
-	"author": "",
+	"author": "Nico Heinrich",
+	"authorUrl": "https://github.com/nico-heinrich",
 	"isDesktopOnly": false
 }
