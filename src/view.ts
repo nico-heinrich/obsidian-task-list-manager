@@ -1,7 +1,6 @@
 import {
 	App,
 	ButtonComponent,
-	ExtraButtonComponent,
 	ItemView,
 	Menu,
 	Modal,
@@ -325,6 +324,12 @@ export class TodoListView extends ItemView {
 		this.contentEl.scrollTop = scrollTop;
 	}
 
+	private addClickableIcon(parent: HTMLElement, icon: string, label: string): HTMLElement {
+		const el = parent.createDiv({ cls: "clickable-icon", attr: { "aria-label": label } });
+		setIcon(el, icon);
+		return el;
+	}
+
 	private renderFileHeadMenu(
 		head: HTMLDivElement,
 		path: string,
@@ -336,15 +341,14 @@ export class TodoListView extends ItemView {
 		const checkedCount = tasks.filter((t) => t.completed).length;
 		const hasChecked = checkedCount > 0;
 
-		const actions = head.createDiv({ cls: "tlm-file-head-actions" });
-		const extra = new ExtraButtonComponent(actions)
-			.setIcon("more-horizontal")
-			.setTooltip("More options")
-			.setDisabled(tasks.length === 0);
+		const actions = head.createDiv({ cls: "view-actions" });
+		const menuBtn = this.addClickableIcon(actions, "more-horizontal", "More options");
+		if (tasks.length === 0) {
+			menuBtn.addClass("is-disabled");
+			return;
+		}
 
-		if (tasks.length === 0) return;
-
-		this.registerDomEvent(extra.extraSettingsEl, "click", (evt) => {
+		this.registerDomEvent(menuBtn, "click", (evt) => {
 			evt.stopPropagation();
 			const menu = new Menu();
 			menu.addItem((item) =>
@@ -455,10 +459,9 @@ export class TodoListView extends ItemView {
 		const bodyCls = task.completed ? "tlm-task-body tlm-task-body-done" : "tlm-task-body";
 		hit.createSpan({ cls: bodyCls, text: task.body || " " });
 
+		const actions = main.createDiv({ cls: "view-actions" });
 		if (task.completed) {
-			const del = main.createEl("button", { cls: "tlm-icon-btn" });
-			setIcon(del, "trash");
-			del.setAttr("aria-label", "Delete task");
+			const del = this.addClickableIcon(actions, "trash", "Delete task");
 			this.registerDomEvent(del, "click", async (ev) => {
 				ev.stopPropagation();
 				const confirmed = await this.confirmDelete(task.body);
@@ -474,10 +477,8 @@ export class TodoListView extends ItemView {
 				}
 			});
 		} else {
-			const editBtn = main.createEl("button", { cls: "tlm-icon-btn tlm-icon-btn-edit" });
-			setIcon(editBtn, "pencil");
-			editBtn.setAttr("aria-label", "Edit task");
-			this.registerDomEvent(editBtn, "click", async (ev) => {
+			const edit = this.addClickableIcon(actions, "pencil", "Edit task");
+			this.registerDomEvent(edit, "click", async (ev) => {
 				ev.stopPropagation();
 				const result = await this.openEditTask(task);
 				if (!result) return;

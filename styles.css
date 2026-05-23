@@ -22,13 +22,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--size-4-2);
-	padding: var(--size-4-2);
 	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.tlm-file-head-actions {
-	flex-shrink: 0;
+  padding-right: var(--size-4-2);
 }
 
 .tlm-file-title {
@@ -38,6 +33,9 @@
 	cursor: var(--cursor-link);
 	word-break: break-all;
   color: var(--color-accent);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	padding: var(--size-4-3);
 }
 
 .tlm-file-title.tlm-missing {
@@ -63,8 +61,8 @@
 	justify-content: center;
 	text-align: center;
 	border: 1px dashed var(--background-modifier-border);
-	border-radius: var(--radius-s);
-	margin: var(--size-4-2);
+	border-radius: var(--radius-m);
+	margin: var(--size-4-3);
 }
 
 .tlm-empty-list-drop-label {
@@ -93,6 +91,7 @@
 	align-items: stretch;
 	width: 100%;
 	min-width: 0;
+  padding-right: var(--size-4-2);
 }
 
 .tlm-task-prefix {
@@ -157,26 +156,6 @@
 
 .tlm-task-hit:hover .tlm-task-body {
 	color: var(--text-normal);
-}
-
-.tlm-icon-btn {
-  height: auto;
-	flex: 0 0 auto;
-	padding: 4px;
-  margin-right: var(--size-4-1);
-	align-self: center;
-	box-shadow: none !important;
-	background-color: transparent !important;
-	color: var(--text-muted) !important;
-}
-
-.tlm-icon-btn:hover {
-	color: var(--text-error) !important;
-	background-color: var(--background-modifier-hover);
-}
-
-.tlm-icon-btn-edit:hover {
-	color: var(--text-normal) !important;
 }
 
 .tlm-drop-before {
@@ -287,7 +266,7 @@
 .tlm-add-row {
 	display: flex;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) var(--size-4-2);
+	padding: var(--size-4-3);
 	border-top: 1px solid var(--background-modifier-border);
 }
 
