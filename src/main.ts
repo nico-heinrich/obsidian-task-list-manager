@@ -45,6 +45,12 @@ export default class TaskListManagerPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on("create", refreshIfConfiguredMd));
 		this.registerEvent(this.app.vault.on("delete", refreshIfConfiguredMd));
 		this.registerEvent(this.app.vault.on("rename", refreshIfConfiguredMd));
+
+		this.registerEvent(
+			this.app.workspace.on("layout-ready", () => {
+				void this.handleLayoutReady();
+			}),
+		);
 	}
 
 	onunload(): void {
@@ -59,21 +65,30 @@ export default class TaskListManagerPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async activateView(): Promise<void> {
+	private handleLayoutReady(): void {
+		const mode = this.settings.openOnStartup;
+		if (mode === "never") return;
+		void this.ensureTaskListView(mode === "always");
+	}
+
+	/** Ensures the task list view exists in the workspace; optionally reveals the sidebar. */
+	async ensureTaskListView(reveal = false): Promise<void> {
 		const { workspace } = this.app;
 		const existing = workspace.getLeavesOfType(TASK_LIST_VIEW_TYPE);
 		if (existing.length > 0) {
-			await workspace.revealLeaf(existing[0]);
+			if (reveal) await workspace.revealLeaf(existing[0]);
 			return;
 		}
 
 		let leaf: WorkspaceLeaf | null = workspace.getRightLeaf(false);
 		if (!leaf) leaf = workspace.getRightLeaf(true);
-		if (!leaf) {
-			leaf = workspace.getLeaf("tab");
-		}
+		if (!leaf) leaf = workspace.getLeaf("tab");
 		await leaf.setViewState({ type: TASK_LIST_VIEW_TYPE, active: true });
-		await workspace.revealLeaf(leaf);
+		if (reveal) await workspace.revealLeaf(leaf);
+	}
+
+	async activateView(): Promise<void> {
+		await this.ensureTaskListView(true);
 	}
 
 	/** Debounced refresh of all task list views */
