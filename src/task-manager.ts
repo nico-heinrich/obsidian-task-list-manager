@@ -82,6 +82,55 @@ export class TaskManager {
 		});
 	}
 
+	async checkAllTasks(path: string): Promise<void> {
+		const file = this.getFile(path);
+		if (!file) return;
+		await this.app.vault.process(file, (data) => {
+			const lines = splitLines(data);
+			let changed = false;
+			for (let i = 0; i < lines.length; i++) {
+				const raw = lines[i];
+				if (!TASK_LINE_RE.test(raw) || !/\[ \]/.test(raw)) continue;
+				lines[i] = raw.replace(/\[ \]/, "[x]");
+				changed = true;
+			}
+			return changed ? joinLines(lines) : data;
+		});
+	}
+
+	async uncheckAllTasks(path: string): Promise<void> {
+		const file = this.getFile(path);
+		if (!file) return;
+		await this.app.vault.process(file, (data) => {
+			const lines = splitLines(data);
+			let changed = false;
+			for (let i = 0; i < lines.length; i++) {
+				const raw = lines[i];
+				if (!TASK_LINE_RE.test(raw) || !/\[[xX]\]/.test(raw)) continue;
+				lines[i] = raw.replace(/\[[xX]\]/, "[ ]");
+				changed = true;
+			}
+			return changed ? joinLines(lines) : data;
+		});
+	}
+
+	async deleteCompletedTasks(path: string): Promise<void> {
+		const file = this.getFile(path);
+		if (!file) return;
+		await this.app.vault.process(file, (data) => {
+			const lines = splitLines(data);
+			let changed = false;
+			for (let i = lines.length - 1; i >= 0; i--) {
+				const m = lines[i].match(TASK_LINE_RE);
+				if (!m) continue;
+				if ((m[2] ?? " ").toLowerCase() !== "x") continue;
+				lines.splice(i, 1);
+				changed = true;
+			}
+			return changed ? joinLines(lines) : data;
+		});
+	}
+
 	/**
 	 * Move task line between files or reorder within one file.
 	 * @param anchorLine 1-based line in dropPath when relation is before/after; ignored for append-end

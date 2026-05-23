@@ -19,11 +19,21 @@
 }
 
 .tlm-file-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
 	padding: var(--size-4-2);
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.tlm-file-head-actions {
+	flex-shrink: 0;
+}
+
 .tlm-file-title {
+	flex: 1 1 auto;
+	min-width: 0;
 	font-weight: var(--font-semibold);
 	cursor: var(--cursor-link);
 	word-break: break-all;

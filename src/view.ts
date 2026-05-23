@@ -1,7 +1,9 @@
 import {
 	App,
 	ButtonComponent,
+	ExtraButtonComponent,
 	ItemView,
+	Menu,
 	Modal,
 	Platform,
 	TFile,
@@ -60,6 +62,56 @@ class ConfirmDeleteModal extends Modal {
 		this.setTitle("Delete task?");
 		const { contentEl } = this;
 		contentEl.createEl("p", { text: this.taskPreview, cls: "tlm-delete-preview" });
+
+		const btnRow = contentEl.createDiv({ cls: "modal-button-container" });
+		new ButtonComponent(btnRow).setButtonText("Delete").setWarning().onClick(() => {
+			this.settle(true);
+			this.close();
+		});
+		new ButtonComponent(btnRow)
+			.setButtonText("Cancel")
+			.onClick(() => {
+				this.settle(false);
+				this.close();
+			});
+	}
+
+	onClose(): void {
+		this.settle(false);
+		const { contentEl } = this;
+		const empty = (): void => {
+			contentEl.empty();
+		};
+		if (Platform.isMobile) {
+			afterModalCloseMobile(empty);
+		} else {
+			empty();
+		}
+	}
+}
+
+class ConfirmDeleteAllModal extends Modal {
+	private readonly message: string;
+	private readonly resolvePromise: (confirmed: boolean) => void;
+	private settled = false;
+
+	constructor(app: App, message: string, resolvePromise: (confirmed: boolean) => void) {
+		super(app);
+		this.message = message;
+		this.resolvePromise = resolvePromise;
+	}
+
+	private settle(confirmed: boolean): void {
+		if (this.settled) return;
+		this.settled = true;
+		this.resolvePromise(confirmed);
+	}
+
+	onOpen(): void {
+		this.modalEl.addClass("tlm-confirm-delete-modal");
+		this.setTitle("Delete all checked tasks?");
+		const { contentEl } = this;
+		contentEl.createEl("p", { text: this.message, cls: "tlm-delete-preview" });
 
 		const btnRow = contentEl.createDiv({ cls: "modal-button-container" });
 		new ButtonComponent(btnRow).setButtonText("Delete").setWarning().onClick(() => {
@@ -258,6 +310,8 @@ export class TodoListView extends ItemView {
 			const content = await this.app.vault.read(file);
 			const tasks = parseTasksFromContent(path, content);
 
+			this.renderFileHeadMenu(head, path, displayName, tasks);
+
 			const listEl = section.createDiv({ cls: "tlm-task-list" });
 			for (const task of tasks) {
 				this.renderTaskRow(listEl, task, indentDepthFromLeadingWhitespace(task.indent));
@@ -269,6 +323,81 @@ export class TodoListView extends ItemView {
 			this.renderAddRow(section, path);
 		}
 		this.contentEl.scrollTop = scrollTop;
+	}
+
+	private renderFileHeadMenu(
+		head: HTMLDivElement,
+		path: string,
+		displayName: string,
+		tasks: ParsedTask[],
+	): void {
+		const allChecked = tasks.length > 0 && tasks.every((t) => t.completed);
+		const allUnchecked = tasks.length === 0 || tasks.every((t) => !t.completed);
+		const checkedCount = tasks.filter((t) => t.completed).length;
+		const hasChecked = checkedCount > 0;
+
+		const actions = head.createDiv({ cls: "tlm-file-head-actions" });
+		const extra = new ExtraButtonComponent(actions)
+			.setIcon("more-horizontal")
+			.setTooltip("More options")
+			.setDisabled(tasks.length === 0);
+
+		if (tasks.length === 0) return;
+
+		this.registerDomEvent(extra.extraSettingsEl, "click", (evt) => {
+			evt.stopPropagation();
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item
+					.setTitle("Check all")
+					.setIcon("check-check")
+					.setDisabled(allChecked)
+					.onClick(() => {
+						void this.plugin.taskManager.checkAllTasks(path).then(() => this.plugin.scheduleRefresh());
+					}),
+			);
+			menu.addItem((item) =>
+				item
+					.setTitle("Uncheck all")
+					.setIcon("square")
+					.setDisabled(allUnchecked)
+					.onClick(() => {
+						void this.plugin.taskManager.uncheckAllTasks(path).then(() => this.plugin.scheduleRefresh());
+					}),
+			);
+			menu.addSeparator();
+			menu.addItem((item) =>
+				item
+					.setTitle("Delete all checked")
+					.setIcon("trash")
+					.setDisabled(!hasChecked)
+					.onClick(() => {
+						void this.confirmDeleteAllChecked(displayName, checkedCount).then((confirmed) => {
+							if (!confirmed) return;
+							const runDelete = (): void => {
+								void this.plugin.taskManager
+									.deleteCompletedTasks(path)
+									.then(() => this.plugin.scheduleRefresh());
+							};
+							if (Platform.isMobile) {
+								afterModalCloseMobileDelete(runDelete);
+							} else {
+								afterModalCloseDesktop(runDelete);
+							}
+						});
+					}),
+			);
+			menu.showAtMouseEvent(evt);
+		});
+	}
+
+	private async confirmDeleteAllChecked(displayName: string, count: number): Promise<boolean> {
+		const taskWord = count === 1 ? "task" : "tasks";
+		const message = `Delete ${count} completed ${taskWord} from ${displayName}?`;
+		return new Promise((resolve) => {
+			const modal = new ConfirmDeleteAllModal(this.app, message, resolve);
+			modal.open();
+		});
 	}
 
 	private renderEmptyListDropZone(listEl: HTMLDivElement, path: string): void {
