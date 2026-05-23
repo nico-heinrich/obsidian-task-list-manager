@@ -19,16 +19,15 @@
 }
 
 .tlm-file-head {
-	padding: var(--size-4-3) var(--size-4-3);
+	padding: var(--size-4-2);
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .tlm-file-title {
 	font-weight: var(--font-semibold);
-	font-size: var(--font-ui-large);
-	line-height: var(--line-height-tight);
 	cursor: var(--cursor-link);
 	word-break: break-all;
+  color: var(--color-accent);
 }
 
 .tlm-file-title.tlm-missing {
@@ -214,12 +213,29 @@
 	padding: var(--size-4-2) 0;
 }
 
+.tlm-edit-task-modal .tlm-edit-subtask-setting {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+}
+
 .tlm-edit-task-modal .tlm-edit-subtask-setting label.setting-item-info {
 	flex: 1 1 auto;
 	align-self: stretch;
 	display: flex;
 	align-items: center;
 	min-height: var(--input-height);
+	min-width: 0;
+	width: auto;
+}
+
+.tlm-edit-task-modal .tlm-edit-subtask-setting .setting-item-control {
+	flex: 0 0 auto;
+	width: auto;
+	align-self: center;
 }
 
 /* Bottom-sheet presentation on mobile for the edit task modal */
@@ -234,6 +250,28 @@
 
 .is-mobile .tlm-edit-task-modal .modal-button-container {
 	padding: 0;
+}
+
+.is-mobile .tlm-edit-task-modal .tlm-edit-subtask-setting,
+.is-phone .tlm-edit-task-modal .tlm-edit-subtask-setting {
+	flex-direction: row !important;
+	align-items: center !important;
+}
+
+.is-mobile .tlm-edit-task-modal .tlm-edit-subtask-setting label.setting-item-info,
+.is-phone .tlm-edit-task-modal .tlm-edit-subtask-setting label.setting-item-info {
+	width: auto !important;
+	flex: 1 1 auto;
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.is-mobile .tlm-edit-task-modal .tlm-edit-subtask-setting .setting-item-control,
+.is-phone .tlm-edit-task-modal .tlm-edit-subtask-setting .setting-item-control {
+	width: auto !important;
+	align-self: center !important;
+	padding-top: 0;
+	margin-top: 0;
 }
 
 .tlm-add-row {
@@ -257,7 +295,6 @@
 }
 
 .tlm-add-btn:disabled {
-	opacity: 0.45;
 	cursor: not-allowed;
 }
 

@@ -427,7 +427,7 @@ export class TodoListView extends ItemView {
 			placeholder: "New task …",
 			cls: "tlm-add-input",
 		});
-		const btn = wrap.createEl("button", { cls: "tlm-add-btn" });
+		const btn = wrap.createEl("button", { cls: "tlm-add-btn mod-cta" });
 		setIcon(btn, "plus");
 		btn.setAttribute("aria-label", "Add task");
 		const syncAddEnabled = () => {
