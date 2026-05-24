@@ -1,12 +1,13 @@
 # Task List Manager
 
-An [Obsidian](https://obsidian.md/) plugin that lets you manage markdown task lists from a dedicated sidebar view. Work with multiple list files, check tasks off, reorder them with drag and drop, and keep everything synced with plain `- [ ]` / `- [x]` lines in your vault.
+An [Obsidian](https://obsidian.md/) plugin that lets you manage markdown task lists from a dedicated sidebar view. Work with multiple list files, check tasks off, reorder them with drag and drop, open wiki links and URLs from task text, and keep everything synced with plain `- [ ]` / `- [x]` lines in your vault.
 
 ## Features
 
 - **Sidebar view** — See all configured list files in one place, grouped by file.
 - **Multiple lists** — Add any markdown files; reorder them in settings and hide lists you do not need in the view.
 - **Standard task syntax** — Uses Obsidian-compatible checkboxes: `- [ ]` and `- [x]`, including indented subtasks.
+- **Links in tasks** — Wiki links (`[[note]]`, `[[note|alias]]`) and bare URLs (`https://…`, `www.…`) in task text are highlighted in the sidebar; use the link icon to open them (vault notes in Obsidian, URLs in your browser).
 - **Quick actions** — Toggle completion, edit open tasks, delete completed tasks, add new tasks inline.
 - **Bulk operations** — Per list: check all, uncheck all, delete all completed.
 - **Drag and drop** — Reorder tasks within a file or move them between lists (including into an empty list).
@@ -56,6 +57,8 @@ Obsidian loads plugins from `.obsidian/plugins/<folder-name>/`. The folder name 
 
    ```markdown
    - [ ] Buy groceries
+   - [ ] Read [[Project notes]]
+   - [ ] Check https://example.com/docs
    - [ ] Write report
      - [ ] Outline
      - [ ] Draft
@@ -68,6 +71,7 @@ Obsidian loads plugins from `.obsidian/plugins/<folder-name>/`. The folder name 
 | Action | How |
 |--------|-----|
 | Complete / reopen | Click the checkbox |
+| Open link | Link icon when the task contains `[[wiki]]` links or URLs (menu if there are several) |
 | Edit | Pencil icon on open tasks (text + optional subtask indent) |
 | Delete | Trash icon on completed tasks |
 | Add task | Type in **New task …** at the bottom of a list and press Enter or **+** |
@@ -101,8 +105,17 @@ Examples:
 ```markdown
 - [ ] Top-level task
 - [x] Done task
+- [ ] Follow up on [[Meeting notes|meeting]]
+- [ ] Review https://example.com/spec
     - [ ] Subtask (4 spaces or tab indent)
 ```
+
+**Links in task text**
+
+- **Wiki links** — `[[Note title]]` or `[[Note title|display text]]` open the note in Obsidian (same as elsewhere in the vault).
+- **URLs** — `http://`, `https://`, and `www.` URLs open in your default browser (`www.` is normalized to `https://`).
+- Link segments are styled in the sidebar; trailing punctuation on URLs (e.g. a period at the end of a sentence) is not part of the link.
+- Markdown link syntax (`[label](url)`) is not parsed separately — use wiki links or bare URLs in task lines.
 
 Other list styles (e.g. `- item` without checkboxes) are ignored. The plugin reads and writes the actual file contents, so your data stays in normal markdown notes.
 
