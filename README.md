@@ -50,7 +50,7 @@ Obsidian loads plugins from `.obsidian/plugins/<folder-name>/`. The folder name 
 
 ## Getting started
 
-1. When the plugin is enabled, the task list view is added to the right sidebar automatically. You can also open it with the **list-checks** ribbon icon or the command **Open task lists** (`Ctrl/Cmd+P` → “Open task lists”).
+1. When the plugin is enabled, the task list view is added to the right sidebar automatically. You can also open it with the **list-todo** ribbon icon or the command **Open task lists** (`Ctrl/Cmd+P` → “Open task lists”).
 2. Go to **Settings → Task List Manager**.
 3. By default, one list is configured: `tasks.md` at the vault root. Create that file (or change the path) and add tasks:
 

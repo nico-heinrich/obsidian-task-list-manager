@@ -170,6 +170,22 @@
 	word-break: break-word;
 }
 
+.tlm-task-body-link {
+	color: var(--text-muted);
+	font-weight: inherit;
+	cursor: inherit;
+	pointer-events: none;
+	text-decoration: none;
+}
+
+.tlm-task-body-done .tlm-task-body-link {
+	color: var(--text-faint);
+}
+
+.tlm-task-hit:hover .tlm-task-body-link {
+	color: var(--text-muted);
+}
+
 .tlm-task-body-done {
 	text-decoration: line-through;
 	color: var(--text-muted);

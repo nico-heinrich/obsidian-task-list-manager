@@ -13,8 +13,13 @@ import {
 import { confirmDelete } from "./confirm-delete-modal";
 import type TaskListManagerPlugin from "./main";
 import { getVisibleListPaths } from "./settings";
-import type { ParsedTask } from "./task-parser";
-import { indentDepthFromLeadingWhitespace, parseTasksFromContent } from "./task-parser";
+import type { ParsedTask, TaskLink } from "./task-parser";
+import {
+	extractLinksFromTaskBody,
+	indentDepthFromLeadingWhitespace,
+	parseTasksFromContent,
+	segmentTaskBodyByLinks,
+} from "./task-parser";
 import type { DropRelation } from "./task-manager";
 
 export const TASK_LIST_VIEW_TYPE = "task-list-manager-view";
@@ -203,7 +208,7 @@ export class TaskListView extends ItemView {
 	}
 
 	getIcon(): string {
-		return "list-checks";
+		return "list-todo";
 	}
 
 	async onOpen(): Promise<void> {
@@ -298,6 +303,57 @@ export class TaskListView extends ItemView {
 		return el;
 	}
 
+	private openTaskLink(link: TaskLink, sourcePath: string): void {
+		if (link.kind === "url") {
+			window.open(link.target);
+			return;
+		}
+		void this.app.workspace.openLinkText(link.target, sourcePath, false);
+	}
+
+	private renderTaskBody(parent: HTMLElement, body: string, completed: boolean): void {
+		const bodyCls = completed ? "tlm-task-body tlm-task-body-done" : "tlm-task-body";
+		const bodyEl = parent.createSpan({ cls: bodyCls });
+		const segments = segmentTaskBodyByLinks(body);
+		const hasLinks = segments.some((s) => s.type === "link");
+		if (!hasLinks) {
+			bodyEl.setText(body || " ");
+			return;
+		}
+		for (const seg of segments) {
+			if (seg.type === "text") {
+				if (seg.text) bodyEl.appendText(seg.text);
+			} else {
+				bodyEl.createSpan({ cls: "tlm-task-body-link", text: seg.text });
+			}
+		}
+	}
+
+	private renderTaskLinkActions(actions: HTMLElement, task: ParsedTask): void {
+		const links = extractLinksFromTaskBody(task.body);
+		if (links.length === 0) return;
+
+		const linkBtn = this.addClickableIcon(
+			actions,
+			"external-link",
+			links.length === 1 ? "Open link" : "Open link…",
+		);
+		this.registerDomEvent(linkBtn, "click", (ev) => {
+			ev.stopPropagation();
+			if (links.length === 1) {
+				this.openTaskLink(links[0], task.path);
+				return;
+			}
+			const menu = new Menu();
+			for (const link of links) {
+				menu.addItem((item) =>
+					item.setTitle(link.label).onClick(() => this.openTaskLink(link, task.path)),
+				);
+			}
+			menu.showAtMouseEvent(ev);
+		});
+	}
+
 	private renderFileHeadMenu(
 		head: HTMLDivElement,
 		path: string,
@@ -322,7 +378,7 @@ export class TaskListView extends ItemView {
 			menu.addItem((item) =>
 				item
 					.setTitle("Check all")
-					.setIcon("check-check")
+					.setIcon("square-check")
 					.setDisabled(allChecked)
 					.onClick(() => {
 						void this.plugin.taskManager.checkAllTasks(path).then(() => this.plugin.scheduleRefresh());
@@ -424,10 +480,10 @@ export class TaskListView extends ItemView {
 			void this.plugin.taskManager.toggleTask(task.path, task.line).then(() => this.plugin.scheduleRefresh());
 		});
 
-		const bodyCls = task.completed ? "tlm-task-body tlm-task-body-done" : "tlm-task-body";
-		hit.createSpan({ cls: bodyCls, text: task.body || " " });
+		this.renderTaskBody(hit, task.body, task.completed);
 
 		const actions = main.createDiv({ cls: "view-actions" });
+		this.renderTaskLinkActions(actions, task);
 		if (task.completed) {
 			const del = this.addClickableIcon(actions, "trash", "Delete task");
 			this.registerDomEvent(del, "click", async (ev) => {

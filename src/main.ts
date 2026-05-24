@@ -22,7 +22,7 @@ export default class TaskListManagerPlugin extends Plugin {
 
 		this.addSettingTab(new TaskListManagerSettingTab(this.app, this));
 
-		this.addRibbonIcon("list-checks", "Open task lists", () => {
+		this.addRibbonIcon("list-todo", "Open task lists", () => {
 			void this.activateView();
 		});
 
