@@ -1,18 +1,18 @@
 # Task List Manager
 
-An [Obsidian](https://obsidian.md/) plugin that lets you manage markdown task lists from a dedicated sidebar view. Work with multiple list files, check tasks off, reorder them with drag and drop, open wiki links and URLs from task text, and keep everything synced with plain `- [ ]` / `- [x]` lines in your vault.
+An [Obsidian](https://obsidian.md/) plugin for managing markdown task lists in a sidebar view. Work with multiple list files, check tasks off, reorder them with drag and drop, and keep everything synced with `- [ ]` / `- [x]` lines in your vault.
 
 ## Features
 
-- **Sidebar view** — See all configured list files in one place, grouped by file.
-- **Multiple lists** — Add any markdown files; reorder them in settings and hide lists you do not need in the view.
-- **Standard task syntax** — Uses Obsidian-compatible checkboxes: `- [ ]` and `- [x]`, including indented subtasks.
-- **Links in tasks** — Wiki links (`[[note]]`, `[[note|alias]]`) and bare URLs (`https://…`, `www.…`) in task text are highlighted in the sidebar; use the link icon to open them (vault notes in Obsidian, URLs in your browser).
-- **Quick actions** — Toggle completion, edit open tasks, delete completed tasks, add new tasks inline.
-- **Bulk operations** — Per list: check all, uncheck all, delete all completed.
-- **Drag and drop** — Reorder tasks within a file or move them between lists (including into an empty list).
-- **Live updates** — Changes in the sidebar write back to your notes; edits in the editor refresh the view automatically.
-- **Desktop and mobile** — Works on both (`isDesktopOnly: false` in the manifest).
+- **Sidebar view** — All configured list files in one place, grouped by file.
+- **Multiple lists** — Add any markdown files; reorder and hide lists in settings.
+- **Standard task syntax** — `- [ ]` and `- [x]`, including indented subtasks.
+- **Links in tasks** — Wiki links, markdown links, and bare URLs are highlighted; use the link icon to open them.
+- **Quick actions** — Toggle, edit, delete completed tasks, add tasks inline.
+- **Bulk operations** — Per list: check all, uncheck all, delete completed.
+- **Drag and drop** — Reorder within a file or move tasks between lists.
+- **Live updates** — Sidebar edits write to your notes; editor changes refresh the view.
+- **Desktop and mobile** — Supported on both platforms.
 
 ## Requirements
 
@@ -20,104 +20,67 @@ An [Obsidian](https://obsidian.md/) plugin that lets you manage markdown task li
 
 ## Installation
 
-This plugin is not yet listed in Obsidian’s Community Plugins catalog. Install it manually from GitHub.
+This plugin is not yet in the Community Plugins catalog. Install from GitHub:
 
-### From source (recommended)
-
-1. Clone the repository into your vault’s plugins folder:
+1. Clone into your vault’s plugins folder:
 
    ```bash
    cd /path/to/your-vault/.obsidian/plugins
    git clone https://github.com/nico-heinrich/todo-list-manager.git task-list-manager
    cd task-list-manager
+   npm install && npm run build
    ```
 
-2. Install dependencies and build:
+   (`pnpm` works too.) `main.js` is not in the repo — rebuild after pulling updates.
 
-   ```bash
-   npm install
-   npm run build
-   ```
-
-   (`pnpm install` / `pnpm run build` also work if you use pnpm.)
-
-3. Enable the plugin in Obsidian: **Settings → Community plugins → Task List Manager**.
-
-The built `main.js` is not committed to the repo; you need to run `npm run build` after cloning or pulling updates.
-
-### Folder name
-
-Obsidian loads plugins from `.obsidian/plugins/<folder-name>/`. The folder name can differ from the plugin id; what matters is that it contains `manifest.json`, `main.js`, and `styles.css`. Using `task-list-manager` (matching the plugin id) keeps things clear.
+2. Enable **Settings → Community plugins → Task List Manager**.
 
 ## Getting started
 
-1. When the plugin is enabled, the task list view is added to the right sidebar automatically. You can also open it with the **list-todo** ribbon icon or the command **Open task lists** (`Ctrl/Cmd+P` → “Open task lists”).
-2. Go to **Settings → Task List Manager**.
-3. By default, one list is configured: `tasks.md` at the vault root. Create that file (or change the path) and add tasks:
+1. Open the view via the **list-todo** ribbon icon or **Open task lists** in the command palette (it also opens in the right sidebar when enabled).
+2. Configure lists under **Settings → Task List Manager** (default: `tasks.md` at the vault root).
+3. Add tasks to your list files:
 
    ```markdown
    - [ ] Buy groceries
    - [ ] Read [[Project notes]]
-   - [ ] Check https://example.com/docs
    - [ ] Write report
      - [ ] Outline
-     - [ ] Draft
    ```
 
-4. Tasks appear in the sidebar under the file name. Click the file title to open the note.
+Click a list title in the sidebar to open that note.
 
 ## Using the sidebar
 
 | Action | How |
 |--------|-----|
-| Complete / reopen | Click the checkbox |
-| Open link | Link icon when the task contains `[[wiki]]` links or URLs (menu if there are several) |
-| Edit | Pencil icon on open tasks (text + optional subtask indent) |
-| Delete | Trash icon on completed tasks |
-| Add task | Type in **New task …** at the bottom of a list and press Enter or **+** |
-| Reorder / move | Drag a task; drop before, after, or on another list’s empty drop zone |
-| Open note | Click the list title |
-| Check all / uncheck all / delete checked | **⋯** menu on the list header |
+| Complete / reopen | Checkbox |
+| Open link | Link icon (menu when there are several) |
+| Edit | Pencil on open tasks |
+| Delete | Trash on completed tasks |
+| Add task | **New task …** + Enter or **+** |
+| Reorder / move | Drag a task |
+| Open note | List title |
+| Bulk actions | **⋯** on the list header |
 
-Hidden lists (eye icon in settings) stay configured but do not show in the sidebar until you show them again.
+Hidden lists (eye in settings) stay configured but are omitted from the view until shown again.
 
 ## Settings
 
-**Settings → Task List Manager**
-
-- **Add file** — Pick a markdown file from your vault (suggest modal).
-- **Drag** — Reorder how lists appear in the sidebar.
-- **Eye** — Hide or show a list in the view without removing it from configuration.
-- **Trash** — Remove a list from the plugin only; the file in your vault is **not** deleted.
-
-Order in settings is the order in the sidebar.
+- **Add file** — Pick a markdown file from the vault.
+- **Drag** — Reorder lists in the sidebar.
+- **Eye** — Hide or show a list without removing it.
+- **Trash** — Remove from the plugin only (vault file is kept).
 
 ## Task format
 
-Only lines matching this pattern are managed:
+Managed lines match:
 
 ```text
 (optional indent)- [ ] or - [x] task text
 ```
 
-Examples:
-
-```markdown
-- [ ] Top-level task
-- [x] Done task
-- [ ] Follow up on [[Meeting notes|meeting]]
-- [ ] Review https://example.com/spec
-    - [ ] Subtask (4 spaces or tab indent)
-```
-
-**Links in task text**
-
-- **Wiki links** — `[[Note title]]` or `[[Note title|display text]]` open the note in Obsidian (same as elsewhere in the vault).
-- **URLs** — `http://`, `https://`, and `www.` URLs open in your default browser (`www.` is normalized to `https://`).
-- Link segments are styled in the sidebar; trailing punctuation on URLs (e.g. a period at the end of a sentence) is not part of the link.
-- Markdown link syntax (`[label](url)`) is not parsed separately — use wiki links or bare URLs in task lines.
-
-Other list styles (e.g. `- item` without checkboxes) are ignored. The plugin reads and writes the actual file contents, so your data stays in normal markdown notes.
+Task text can include `[[wiki links]]`, `[markdown](links)`, and bare `https://` URLs. Other list styles (e.g. `- item` without checkboxes) are ignored.
 
 ## Development
 
@@ -125,35 +88,18 @@ Other list styles (e.g. `- item` without checkboxes) are ignored. The plugin rea
 git clone https://github.com/nico-heinrich/todo-list-manager.git
 cd todo-list-manager
 npm install
-npm run dev    # watch build → main.js
-# or
-npm run build  # production bundle
+npm run dev    # watch build
+npm run build  # production
 ```
 
-For local testing, symlink or copy the project into `.obsidian/plugins/task-list-manager` and reload Obsidian after changes.
+Symlink or copy the project into `.obsidian/plugins/task-list-manager` and reload Obsidian after changes.
 
-| File / folder | Role |
-|---------------|------|
-| `src/main.ts` | Plugin entry, commands, vault refresh |
-| `src/view.ts` | Sidebar UI |
-| `src/task-manager.ts` | Vault read/write for tasks |
-| `src/task-parser.ts` | Parse and format task lines |
-| `src/settings.ts` | Settings tab |
-| `manifest.json` | Plugin metadata for Obsidian |
-| `styles.css` | Sidebar and settings styles |
+## Releasing
 
-## Releasing (Community Plugins)
-
-To publish or update the plugin in Obsidian’s Community Plugins directory:
-
-1. Bump `version` in `manifest.json` (semver, e.g. `1.0.0`).
+1. Bump `version` in `manifest.json`.
 2. Run `npm run build`.
-3. [Create a GitHub release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release) whose **tag** matches that version exactly.
-4. Attach these files to the release: `main.js`, `manifest.json`, `styles.css`.
-5. Commit the updated `manifest.json` on the default branch.
-6. Submit or update at [community.obsidian.md](https://community.obsidian.md) (**Plugins → New plugin**), linking your GitHub repo.
-
-Official guide: [Submit your plugin](https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin).
+3. Create a GitHub release with the same tag; attach `main.js`, `manifest.json`, and `styles.css`.
+4. Submit or update via [Obsidian’s plugin guide](https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin).
 
 ## License
 
@@ -161,4 +107,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
-Issues and pull requests are welcome on [GitHub](https://github.com/nico-heinrich/todo-list-manager).
+Issues and pull requests welcome on [GitHub](https://github.com/nico-heinrich/todo-list-manager).

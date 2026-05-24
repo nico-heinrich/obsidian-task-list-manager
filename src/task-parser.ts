@@ -91,11 +91,26 @@ export type TaskBodySegment =
 	| { type: "link"; text: string; kind: TaskLinkKind };
 
 const WIKI_LINK_RE = /\[\[([^\]]+)\]\]/g;
+const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 const URL_LINK_RE = /(?:https?:\/\/|www\.)[^\s<>\[\]()]+/gi;
 const URL_TRAILING_PUNCT_RE = /[.,;:!?)]+$/;
 
+type LinkRange = { start: number; end: number };
+
 function rangesOverlap(aStart: number, aEnd: number, bStart: number, bEnd: number): boolean {
 	return aStart < bEnd && bStart < aEnd;
+}
+
+function overlapsAnyRange(start: number, end: number, ranges: LinkRange[]): boolean {
+	return ranges.some((r) => rangesOverlap(start, end, r.start, r.end));
+}
+
+function isExternalUrlTarget(target: string): boolean {
+	return /^(https?:\/\/|www\.)/i.test(target.trim());
+}
+
+function linkDisplayText(link: TaskLink): string {
+	return link.raw.startsWith("[") ? link.label : link.raw;
 }
 
 /** Prepends `https://` for `www.` hosts so `window.open` works reliably. */
@@ -106,9 +121,10 @@ export function normalizeUrlTarget(target: string): string {
 	return target;
 }
 
-/** Wiki links `[[...]]` and bare `http(s)://` / `www.` URLs in task body text, in source order. */
+/** Wiki links, markdown `[label](target)`, and bare `http(s)://` / `www.` URLs, in source order. */
 export function extractLinksFromTaskBody(body: string): TaskLink[] {
 	const found: { index: number; link: TaskLink }[] = [];
+	const occupied: LinkRange[] = [];
 
 	let m: RegExpExecArray | null;
 	WIKI_LINK_RE.lastIndex = 0;
@@ -119,19 +135,45 @@ export function extractLinksFromTaskBody(body: string): TaskLink[] {
 		const label = (pipe >= 0 ? inner.slice(pipe + 1) : inner).trim() || target;
 		const start = m.index;
 		const end = start + m[0].length;
+		occupied.push({ start, end });
 		found.push({
 			index: start,
 			link: { kind: "wiki", raw: m[0], target, label, start, end },
 		});
 	}
 
-	const wikiRanges = found.map((f) => ({ start: f.index, end: f.index + f.link.raw.length }));
+	MARKDOWN_LINK_RE.lastIndex = 0;
+	while ((m = MARKDOWN_LINK_RE.exec(body)) !== null) {
+		const start = m.index;
+		const end = start + m[0].length;
+		if (overlapsAnyRange(start, end, occupied)) {
+			continue;
+		}
+		const label = m[1].trim() || m[2].trim();
+		const targetRaw = m[2].trim();
+		const external = isExternalUrlTarget(targetRaw);
+		const target = external
+			? normalizeUrlTarget(targetRaw.replace(URL_TRAILING_PUNCT_RE, ""))
+			: targetRaw;
+		occupied.push({ start, end });
+		found.push({
+			index: start,
+			link: {
+				kind: external ? "url" : "wiki",
+				raw: m[0],
+				target,
+				label,
+				start,
+				end,
+			},
+		});
+	}
 
 	URL_LINK_RE.lastIndex = 0;
 	while ((m = URL_LINK_RE.exec(body)) !== null) {
 		const start = m.index;
 		const end = start + m[0].length;
-		if (wikiRanges.some((w) => rangesOverlap(start, end, w.start, w.end))) {
+		if (overlapsAnyRange(start, end, occupied)) {
 			continue;
 		}
 		const raw = m[0];
@@ -159,8 +201,7 @@ export function segmentTaskBodyByLinks(body: string): TaskBodySegment[] {
 		if (link.start > pos) {
 			segments.push({ type: "text", text: body.slice(pos, link.start) });
 		}
-		const displayText = link.kind === "wiki" ? link.label : link.raw;
-		segments.push({ type: "link", text: displayText, kind: link.kind });
+		segments.push({ type: "link", text: linkDisplayText(link), kind: link.kind });
 		pos = link.end;
 	}
 	if (pos < body.length) {
