@@ -90,6 +90,14 @@ export type TaskBodySegment =
 	| { type: "text"; text: string }
 	| { type: "link"; text: string; kind: TaskLinkKind };
 
+/** Inline notes hidden in the task list UI: `%% comment %%` */
+const DISPLAY_COMMENT_RE = /%%[\s\S]*?%%/g;
+
+/** Remove `%% … %%` spans and collapse surrounding whitespace for display. */
+export function stripTaskBodyDisplayComments(body: string): string {
+	return body.replace(DISPLAY_COMMENT_RE, " ").replace(/\s{2,}/g, " ").trim();
+}
+
 const WIKI_LINK_RE = /\[\[([^\]]+)\]\]/g;
 const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 const URL_LINK_RE = /(?:https?:\/\/|www\.)[^\s<>\[\]()]+/gi;

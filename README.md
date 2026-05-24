@@ -80,7 +80,7 @@ Managed lines match:
 (optional indent)- [ ] or - [x] task text
 ```
 
-Task text can include `[[wiki links]]`, `[markdown](links)`, and bare `https://` URLs. Other list styles (e.g. `- item` without checkboxes) are ignored.
+Task text can include `[[wiki links]]`, `[markdown](links)`, and bare `https://` URLs. Wrap notes in `%% … %%` to hide them in the sidebar (they stay in the file). Other list styles (e.g. `- item` without checkboxes) are ignored.
 
 ## Development
 

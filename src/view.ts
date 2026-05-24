@@ -19,6 +19,7 @@ import {
 	indentDepthFromLeadingWhitespace,
 	parseTasksFromContent,
 	segmentTaskBodyByLinks,
+	stripTaskBodyDisplayComments,
 } from "./task-parser";
 import type { DropRelation } from "./task-manager";
 
@@ -314,10 +315,11 @@ export class TaskListView extends ItemView {
 	private renderTaskBody(parent: HTMLElement, body: string, completed: boolean): void {
 		const bodyCls = completed ? "tlm-task-body tlm-task-body-done" : "tlm-task-body";
 		const bodyEl = parent.createSpan({ cls: bodyCls });
-		const segments = segmentTaskBodyByLinks(body);
+		const displayBody = stripTaskBodyDisplayComments(body);
+		const segments = segmentTaskBodyByLinks(displayBody);
 		const hasLinks = segments.some((s) => s.type === "link");
 		if (!hasLinks) {
-			bodyEl.setText(body || " ");
+			bodyEl.setText(displayBody || " ");
 			return;
 		}
 		for (const seg of segments) {
@@ -330,7 +332,7 @@ export class TaskListView extends ItemView {
 	}
 
 	private renderTaskLinkActions(actions: HTMLElement, task: ParsedTask): void {
-		const links = extractLinksFromTaskBody(task.body);
+		const links = extractLinksFromTaskBody(stripTaskBodyDisplayComments(task.body));
 		if (links.length === 0) return;
 
 		const linkBtn = this.addClickableIcon(
